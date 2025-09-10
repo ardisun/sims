@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laporan Piket Harian</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .container {
+        max-width: 1200px;
+      }
+      .card {
+        border: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .nav-tabs .nav-link {
+        color: #495057;
+      }
+      .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background-color: #fff;
+        border-color: #dee2e6 #dee2e6 #fff;
+      }
+      /* Custom CSS for Select2 to better fit Bootstrap form controls */
+      .select2-container--bootstrap-5 .select2-selection {
+        min-height: calc(1.5em + 0.75rem + 2px);
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        border-radius: 0.375rem;
+      }
+      .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        margin-top: 0.3rem; /* Better vertical alignment for tags */
+      }
+      .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+      .select2-container--bootstrap-5.select2-container--open .select2-selection {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      }
+      /* Custom styles for SweetAlert review */
+      .swal2-html-container {
+        text-align: left !important;
+        margin-left: 1.25rem !important;
+      }
+      .swal2-html-container h6 {
+        margin-top: 1rem;
+        color: #0d6efd;
+      }
+      .swal2-html-container ul {
+        padding-left: 0;
+      }
+      /* Okupasi/Jadwal Table Style */
+      .schedule-table td.occupied {
+        background-color: #e9f5ff;
+        font-weight: bold;
+        vertical-align: middle;
+      }
+      .schedule-table th,
+      .schedule-table td {
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container my-5">
+      <div class="text-center mb-4">
+        <h1 class="display-6">Laporan Piket Harian</h1>
+        <p class="text-muted">Pilih tab di bawah untuk mengisi laporan atau melihat jadwal.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <!-- Navigasi Tab -->
+          <ul class="nav nav-tabs card-header-tabs" id="piketTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="guru-tab" data-bs-toggle="tab" data-bs-target="#laporan-guru" type="button" role="tab" aria-controls="laporan-guru" aria-selected="true"><i class="fas fa-chalkboard-teacher me-2"></i>Laporan Guru</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="siswa-tab" data-bs-toggle="tab" data-bs-target="#laporan-siswa" type="button" role="tab" aria-controls="laporan-siswa" aria-selected="false"><i class="fas fa-users me-2"></i>Laporan Siswa</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="siswa-absen-tab" data-bs-toggle="tab" data-bs-target="#siswa-tidak-masuk" type="button" role="tab" aria-controls="siswa-tidak-masuk" aria-selected="false"><i class="fas fa-user-slash me-2"></i>Siswa Tidak Masuk</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="okupasi-tab" data-bs-toggle="tab" data-bs-target="#okupasi-kelas" type="button" role="tab" aria-controls="okupasi-kelas" aria-selected="false"><i class="fas fa-user-clock me-2"></i>Okupasi Guru</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="jadwal-tab" data-bs-toggle="tab" data-bs-target="#jadwal-kelas" type="button" role="tab" aria-controls="jadwal-kelas" aria-selected="false"><i class="fas fa-calendar-alt me-2"></i>Jadwal Kelas</button>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <!-- Konten Tab -->
+          <div class="tab-content" id="piketTabContent">
+            <!-- Tab Laporan Guru -->
+            <div class="tab-pane fade show active" id="laporan-guru" role="tabpanel" aria-labelledby="guru-tab">
+              <div class="card mb-4">
+                <div class="card-body">
+                  <h5 class="card-title">Form Laporan Guru Tidak Hadir / Memberi Tugas</h5>
+                  <form id="form-guru" novalidate>
+                    <div id="guru-rows-container">
+                      <!-- Baris dinamis guru akan ditambahkan di sini -->
+                    </div>
+                    <div class="mt-3">
+                      <button type="button" class="btn btn-primary" id="add-guru-row"><i class="fas fa-plus-circle me-2"></i>Tambah Laporan Guru</button>
+                      <button type="submit" class="btn btn-success"><i class="fas fa-check-circle me-2"></i>Simpan Laporan Guru</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Hasil Laporan</h5>
+                  <p class="card-subtitle mb-2 text-muted date-display"></p>
+                  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <div class="input-group" style="max-width: 400px">
+                      <input type="text" class="form-control" placeholder="Cari: nama, mapel, kelas, keterangan, pesan..." />
+                      <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                    <div>
+                      <button class="btn btn-outline-secondary"><i class="fas fa-sync-alt me-2"></i>Refresh</button>
+                      <button class="btn btn-outline-primary"><i class="fas fa-print me-2"></i>Cetak</button>
+                    </div>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Tanggal</th>
+                          <th>Nama Guru</th>
+                          <th>Mapel</th>
+                          <th>Kelas</th>
+                          <th>Jam</th>
+                          <th>Keterangan</th>
+                          <th>Pesan</th>
+                          <th>Petugas</th>
+                        </tr>
+                      </thead>
+                      <tbody id="hasil-laporan-guru-body">
+                        <!-- Data hasil laporan guru akan dimuat di sini -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab Laporan Siswa -->
+            <div class="tab-pane fade" id="laporan-siswa" role="tabpanel" aria-labelledby="siswa-tab">
+              <h5 class="card-title mb-3">Form Laporan Ketidakhadiran Siswa</h5>
+              <form id="form-siswa">
+                <div id="siswa-rows-container">
+                  <!-- Baris dinamis siswa akan ditambahkan di sini -->
+                </div>
+                <div class="mt-3">
+                  <button type="button" class="btn btn-info text-white" id="add-siswa-row"><i class="fas fa-plus-circle me-2"></i>Tambah Laporan Siswa</button>
+                  <button type="submit" class="btn btn-success"><i class="fas fa-check-circle me-2"></i>Simpan Laporan Siswa</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Tab Siswa Tidak Masuk -->
+            <div class="tab-pane fade" id="siswa-tidak-masuk" role="tabpanel" aria-labelledby="siswa-absen-tab">
+              <h5 class="card-title mb-3">Daftar Siswa Tidak Masuk</h5>
+              <p class="card-subtitle mb-3 text-muted date-display"></p>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Tanggal</th>
+                      <th>Kelas</th>
+                      <th>Izin</th>
+                      <th>Sakit</th>
+                      <th>Alpha</th>
+                      <th>Petugas</th>
+                    </tr>
+                  </thead>
+                  <tbody id="siswa-absen-body">
+                    <!-- Data siswa tidak masuk akan dimuat di sini -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab Okupasi Kelas -->
+            <div class="tab-pane fade" id="okupasi-kelas" role="tabpanel" aria-labelledby="okupasi-tab">
+              <h5 class="card-title mb-3">Daftar Keterisian Kelas oleh Guru</h5>
+              <p class="card-subtitle mb-3 text-muted date-display"></p>
+              <div class="table-responsive">
+                <table id="okupasi-table" class="table table-bordered text-center schedule-table">
+                  <!-- Konten tabel akan digenerate oleh JavaScript -->
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab Jadwal Kelas -->
+            <div class="tab-pane fade" id="jadwal-kelas" role="tabpanel" aria-labelledby="jadwal-tab">
+              <h5 class="card-title mb-3">Jadwal Pelajaran Kelas</h5>
+              <p class="card-subtitle mb-3 text-muted date-display"></p>
+              <div class="table-responsive">
+                <table id="jadwal-table" class="table table-bordered text-center schedule-table">
+                  <!-- Konten tabel akan digenerate oleh JavaScript -->
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer text-muted text-center">Pastikan data yang diinput sudah benar sebelum disimpan.</div>
+      </div>
+    </div>
+
+    <!-- JQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+
+    <!-- Script untuk Inisialisasi Data Umum dan Fungsi Bersama -->
+    <script>
+      // === DATA UMUM ===
+      const dataGuru = [
+        { id: 1, nama_guru: "Sunardi", email: "admin@gmail.com", mapel: "Koding", no_hp: 6285743931135 },
+        { id: 2, nama_guru: "Ita Ariyanti", email: "ariyanti@trensains.sch.id", mapel: "Fisika", no_hp: 6287866120011 },
+        { id: 3, nama_guru: "Momon", email: "go@trensains.sch.id", mapel: "Informatika", no_hp: 6285743931135 },
+        { id: 4, nama_guru: "Yuni Hidayani", email: "yuni@trensains.sch.id", mapel: "Kimia", no_hp: "" },
+      ];
+      const daftarAlasan = ["Sakit", "Izin", "Dinas", "Lomba", "Tugas Lainnya"];
+      const dataSiswaByKelas = {
+        "7A": [
+          { id: "89ae9892ef3e1a377a0b456abb8e88db", nama: "Abimanyu Wijaya", nis: "" },
+          { id: "9c0c173562e3eec740512428eb321e87", nama: "Zoran Shabaz", nis: "" },
+        ],
+        "7B": [
+          { id: "b5f6956af8e9906f02a62859d0844b43", nama: "Aghatan Deanish Al Ahnaf", nis: "" },
+          { id: "069e192fd615059b8ad7281fc68a4b4c", nama: "Alkhalifi Zikri Wiratno", nis: "" },
+        ],
+        "7C": [
+          { id: "f4cf69d4cc892603784fc5b6dbe4ce31", nama: "Akhtar Danadhiyaksa", nis: "" },
+          { id: "a4e5130a91d48c1d63c4dccbef5bc463", nama: "Almuzaqi Aan Putra Walinda", nis: "" },
+        ],
+      };
+      const daftarKelas = Object.keys(dataSiswaByKelas);
+      const okupasiKelasData = {
+        "7A": [
+          { guru: "Sunardi", mapel: "Koding", jamMulai: 1, jamSelesai: 3 },
+          { guru: "Momon", mapel: "Informatika", jamMulai: 6, jamSelesai: 7 },
+        ],
+        "7B": [
+          { guru: "Momon", mapel: "Informatika", jamMulai: 1, jamSelesai: 3 },
+          { guru: "Ita Ariyanti", mapel: "Fisika", jamMulai: 5, jamSelesai: 7 },
+        ],
+        "7C": [{ guru: "Yuni Hidayani", mapel: "Kimia", jamMulai: 2, jamSelesai: 4 }],
+      };
+      const jadwalKelasData = {
+        "7A": [
+          { guru: "Ita Ariyanti", mapel: "Matematika", jamMulai: 1, jamSelesai: 2 },
+          { guru: "Istirahat", mapel: "", jamMulai: 3, jamSelesai: 3 },
+          { guru: "Momon", mapel: "Bahasa Inggris", jamMulai: 4, jamSelesai: 5 },
+          { guru: "Yuni Hidayani", mapel: "IPA", jamMulai: 6, jamSelesai: 8 },
+        ],
+        "7B": [
+          { guru: "Sunardi", mapel: "Bahasa Indonesia", jamMulai: 1, jamSelesai: 3 },
+          { guru: "Budi", mapel: "Olahraga", jamMulai: 4, jamSelesai: 5 },
+          { guru: "Istirahat", mapel: "", jamMulai: 6, jamSelesai: 6 },
+          { guru: "Ita Ariyanti", mapel: "IPS", jamMulai: 7, jamSelesai: 8 },
+        ],
+        "7C": [
+          { guru: "Istirahat", mapel: "", jamMulai: 1, jamSelesai: 1 },
+          { guru: "Budi", mapel: "Agama", jamMulai: 2, jamSelesai: 4 },
+          { guru: "Momon", mapel: "Seni Budaya", jamMulai: 5, jamSelesai: 7 },
+        ],
+      };
+      const dataLaporanGuruDummy = [
+        { id: 1, tanggal: "2025-09-08", namaGuru: "Sunardi", mapel: "Koding", kelas: "7A", jam: "1-3", keterangan: "Sakit", pesan: "Kerjakan LKS Hal 20.", petugas: "Administrator" },
+        { id: 2, tanggal: "2025-09-08", namaGuru: "Yuni Hidayani", mapel: "Kimia", kelas: "7C", jam: "2-4", keterangan: "Dinas Luar", pesan: "-", petugas: "Administrator" },
+      ];
+      const dataSiswaAbsenDummy = [
+        { id: 1, tanggal: "2025-09-08", kelas: "7A", izin: "Abimanyu Wijaya", sakit: "-", alpha: "-", petugas: "Administrator" },
+        { id: 2, tanggal: "2025-09-08", kelas: "7B", izin: "-", sakit: "Aghatan Deanish", alpha: "Alkhalifi Zikri", petugas: "Administrator" },
+      ];
+
+      $(document).ready(function () {
+        // === FUNGSI BERSAMA ===
+        const today = new Date();
+        const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+        const formattedDate = today.toLocaleDateString("id-ID", options);
+        $(".date-display").text("Hari ini: " + formattedDate);
+
+        $("body").on("click", ".remove-row", function () {
+          $(this)
+            .closest(".card")
+            .find(".select2-multiple")
+            .each(function () {
+              if ($(this).data("select2")) {
+                $(this).select2("destroy");
+              }
+            });
+          $(this).closest(".card").remove();
+        });
+      });
+    </script>
+
+    <!-- Script untuk Logika Laporan Guru -->
+    <script>
+      $(document).ready(function () {
+        const addGuruRowBtn = $("#add-guru-row");
+        const guruContainer = $("#guru-rows-container");
+        let guruRowIndex = 0;
+
+        const createGuruRow = () => {
+          guruRowIndex++;
+          let jamMulaiOptions = '<option selected disabled value="">Pilih...</option>';
+          for (let i = 1; i <= 8; i++) {
+            jamMulaiOptions += `<option value="${i}">${i}</option>`;
+          }
+          const card = `<div class="card mb-3"><div class="card-body"><button type="button" class="btn-close float-end remove-row" aria-label="Close"></button><div class="row g-3 align-items-end"><div class="col-lg-2"><label class="form-label">Nama Guru</label><select class="form-select guru-select" required><option selected disabled value="">Pilih Guru...</option>${dataGuru.map((guru) => `<option value="${guru.id}" data-no_hp="${guru.no_hp}">${guru.nama_guru}</option>`).join("")}</select></div><div class="col-lg-2"><label class="form-label">Mata Pelajaran</label><select class="form-select mapel-select" required disabled><option>Pilih guru dulu...</option></select></div><div class="col-lg-2"><label class="form-label">Kelas</label><select class="form-select kelas-select" required><option selected disabled value="">Pilih Kelas...</option>${daftarKelas
+            .map((kelas) => `<option value="${kelas}">${kelas}</option>`)
+            .join("")}</select></div><div class="col-lg-2"><label class="form-label">Alasan</label><select class="form-select alasan-select" required><option selected disabled value="">Pilih Alasan...</option>${daftarAlasan
+            .map((alasan) => `<option value="${alasan}">${alasan}</option>`)
+            .join(
+              ""
+            )}</select></div><div class="col-lg-1"><label class="form-label">Jam Ke-</label><select class="form-select jam-mulai-select" required>${jamMulaiOptions}</select></div><div class="col-lg-1"><label class="form-label">Sampai</label><select class="form-select jam-selesai-select" required disabled><option>Pilih...</option></select></div><div class="col-lg-2"><div><div class="form-check form-check-inline"><input class="form-check-input status-tugas-radio" type="radio" name="status_tugas_${guruRowIndex}" value="dengan_tugas"><label class="form-check-label">Dengan Tugas</label></div><div class="form-check form-check-inline"><input class="form-check-input status-tugas-radio" type="radio" name="status_tugas_${guruRowIndex}" value="tanpa_tugas" checked><label class="form-check-label">Tanpa Tugas</label></div></div></div><div class="col-12 catatan-wrapper" style="display: none; margin-top: 1rem !important;"><label class="form-label">Catatan Tugas</label><input type="text" class="form-control" placeholder="Tuliskan detail tugas di sini..."></div></div></div></div>`;
+          guruContainer.append(card);
+        };
+
+        addGuruRowBtn.on("click", createGuruRow);
+        guruContainer.on("change", ".guru-select", function () {
+          const guruData = dataGuru.find((g) => g.id == $(this).val());
+          const mapelSelect = $(this).closest(".row").find(".mapel-select");
+          if (guruData) {
+            mapelSelect.html(`<option value="${guruData.mapel}">${guruData.mapel}</option>`).prop("disabled", false);
+          } else {
+            mapelSelect.html("<option>Pilih guru dulu...</option>").prop("disabled", true);
+          }
+        });
+        guruContainer.on("change", ".jam-mulai-select", function () {
+          const jamMulai = parseInt($(this).val());
+          const jamSelesaiSelect = $(this).closest(".row").find(".jam-selesai-select");
+          let jamSelesaiOptions = "";
+          for (let i = jamMulai; i <= 8; i++) {
+            jamSelesaiOptions += `<option value="${i}">${i}</option>`;
+          }
+          jamSelesaiSelect.html(jamSelesaiOptions).prop("disabled", false);
+        });
+        guruContainer.on("change", ".status-tugas-radio", function () {
+          const catatanWrapper = $(this).closest(".card-body").find(".catatan-wrapper");
+          const catatanInput = catatanWrapper.find("input");
+          if ($(this).val() === "dengan_tugas") {
+            catatanWrapper.slideDown();
+            catatanInput.prop("required", true);
+          } else {
+            catatanWrapper.slideUp();
+            catatanInput.prop("required", false).val("");
+          }
+        });
+        $("#form-guru").on("submit", function (e) {
+          e.preventDefault();
+          if (!this.checkValidity()) {
+            e.stopPropagation();
+            $(this).addClass("was-validated");
+            return;
+          }
+          const laporanGuru = [];
+          $("#guru-rows-container .card").each(function () {
+            laporanGuru.push({
+              namaGuru: $(this).find(".guru-select option:selected").text(),
+              mapel: $(this).find(".mapel-select").val(),
+              kelas: $(this).find(".kelas-select").val(),
+              alasan: $(this).find(".alasan-select").val(),
+              statusTugas: $(this).find(".status-tugas-radio:checked").val(),
+              jamMulai: $(this).find(".jam-mulai-select").val(),
+              jamSelesai: $(this).find(".jam-selesai-select").val(),
+              catatan: $(this).find(".status-tugas-radio:checked").val() === "dengan_tugas" ? $(this).find(".catatan-wrapper input").val() : null,
+            });
+          });
+          let reviewHtml = '<div class="text-start">';
+          laporanGuru.forEach((l, i) => {
+            reviewHtml += `<h6>Laporan #${i + 1}</h6><ul class="list-unstyled">
+                        <li><strong>Guru:</strong> ${l.namaGuru}</li><li><strong>Mapel:</strong> ${l.mapel}</li>
+                        <li><strong>Kelas:</strong> ${l.kelas || "N/A"}</li><li><strong>Alasan:</strong> ${l.alasan || "N/A"}</li>
+                        <li><strong>Jam:</strong> ${l.jamMulai} - ${l.jamSelesai}</li><li><strong>Status:</strong> ${l.statusTugas.replace("_", " ")}</li>
+                        ${l.catatan ? `<li><strong>Catatan:</strong> ${l.catatan}</li>` : ""}</ul><hr>`;
+          });
+          reviewHtml += "</div>";
+          Swal.fire({ title: "Review Data Laporan Guru", html: reviewHtml, icon: "info", showCancelButton: true, confirmButtonColor: "#28a745", cancelButtonColor: "#6c757d", confirmButtonText: "Ya, Kirim!", cancelButtonText: "Batal" }).then((result) => {
+            if (result.isConfirmed) {
+              console.log("Mengirim data Guru:", JSON.stringify(laporanGuru, null, 2));
+              Swal.fire("Terkirim!", "Laporan guru berhasil disimpan.", "success");
+            }
+          });
+        });
+        const loadHasilLaporanGuru = () => {
+          let tableBody = "";
+          dataLaporanGuruDummy.forEach((l, i) => {
+            tableBody += `<tr><td>${i + 1}</td><td>${l.tanggal}</td><td>${l.namaGuru}</td><td>${l.mapel}</td><td>${l.kelas}</td><td>${l.jam}</td><td>${l.keterangan}</td><td>${l.pesan}</td><td>${l.petugas}</td></tr>`;
+          });
+          $("#hasil-laporan-guru-body").html(tableBody);
+        };
+
+        createGuruRow(); // Buat baris pertama
+        loadHasilLaporanGuru(); // Muat data dummy hasil laporan
+      });
+    </script>
+
+    <!-- Script untuk Logika Laporan Siswa & Siswa Tidak Masuk -->
+    <script>
+      $(document).ready(function () {
+        const addSiswaRowBtn = $("#add-siswa-row");
+        const siswaContainer = $("#siswa-rows-container");
+        let siswaRowIndex = 0;
+
+        const createSiswaRow = () => {
+          siswaRowIndex++;
+          const card = $(
+            `<div class="card mb-3"><div class="card-body"><button type="button" class="btn-close float-end remove-row" aria-label="Close"></button><div class="row g-3"><div class="col-lg-3"><label class="form-label">Kelas</label><select class="form-select kelas-select" required><option selected disabled value="">Pilih Kelas...</option>${daftarKelas
+              .map((k) => `<option value="${k}">${k}</option>`)
+              .join("")}</select></div><div class="col-lg-3"><label class="form-label">Siswa Sakit</label><select class="form-select select2-multiple" name="sakit_${siswaRowIndex}[]" multiple="multiple" disabled></select></div><div class="col-lg-3"><label class="form-label">Siswa Izin</label><select class="form-select select2-multiple" name="izin_${siswaRowIndex}[]" multiple="multiple" disabled></select></div><div class="col-lg-3"><label class="form-label">Siswa Alpha</label><select class="form-select select2-multiple" name="alpha_${siswaRowIndex}[]" multiple="multiple" disabled></select></div></div></div></div>`
+          );
+          siswaContainer.append(card);
+          card.find(".select2-multiple").select2({ theme: "bootstrap-5", placeholder: "Pilih kelas dulu", closeOnSelect: false });
+        };
+
+        addSiswaRowBtn.on("click", createSiswaRow);
+        siswaContainer.on("change", ".kelas-select", function () {
+          const selectedKelas = $(this).val();
+          const siswaDiKelas = dataSiswaByKelas[selectedKelas] || [];
+          const optionsHtml = siswaDiKelas.map((s) => `<option value="${s.id}">${s.nama}</option>`).join("");
+          $(this)
+            .closest(".card")
+            .find(".select2-multiple")
+            .each(function () {
+              $(this).select2("destroy").html(optionsHtml).prop("disabled", false).select2({ theme: "bootstrap-5", placeholder: "Pilih siswa", closeOnSelect: false });
+            });
+        });
+        $("#form-siswa").on("submit", function (e) {
+          e.preventDefault();
+          const laporanSiswa = [];
+          $("#siswa-rows-container .card").each(function () {
+            laporanSiswa.push({
+              kelas: $(this).find(".kelas-select").val(),
+              sakit: $(this).find('select[name^="sakit"]').val() || [],
+              izin: $(this).find('select[name^="izin"]').val() || [],
+              alpha: $(this).find('select[name^="alpha"]').val() || [],
+            });
+          });
+          const getNamaSiswa = (kelas, ids) => {
+            if (!dataSiswaByKelas[kelas] || !ids || ids.length === 0) return "Tidak ada";
+            return ids.map((id) => (dataSiswaByKelas[kelas].find((s) => s.id === id) || {}).nama || "N/A").join(", ");
+          };
+          let reviewHtml = '<div class="text-start">';
+          laporanSiswa.forEach((l, i) => {
+            reviewHtml += `<h6>Laporan Kelas: ${l.kelas || "N/A"}</h6><ul class="list-unstyled">
+                        <li><strong>Sakit:</strong> ${getNamaSiswa(l.kelas, l.sakit)}</li>
+                        <li><strong>Izin:</strong> ${getNamaSiswa(l.kelas, l.izin)}</li>
+                        <li><strong>Alpha:</strong> ${getNamaSiswa(l.kelas, l.alpha)}</li></ul><hr>`;
+          });
+          reviewHtml += "</div>";
+          Swal.fire({ title: "Review Data Laporan Siswa", html: reviewHtml, icon: "info", showCancelButton: true, confirmButtonColor: "#28a745", cancelButtonColor: "#6c757d", confirmButtonText: "Ya, Kirim!", cancelButtonText: "Batal" }).then((result) => {
+            if (result.isConfirmed) {
+              console.log("Mengirim data Siswa:", JSON.stringify(laporanSiswa, null, 2));
+              Swal.fire("Terkirim!", "Laporan siswa berhasil disimpan.", "success");
+            }
+          });
+        });
+
+        const loadSiswaAbsen = () => {
+          let tableBody = "";
+          dataSiswaAbsenDummy.forEach((l, i) => {
+            tableBody += `<tr><td>${i + 1}</td><td>${l.tanggal}</td><td>${l.kelas}</td><td>${l.izin}</td><td>${l.sakit}</td><td>${l.alpha}</td><td>${l.petugas}</td></tr>`;
+          });
+          $("#siswa-absen-body").html(tableBody);
+        };
+
+        createSiswaRow(); // Buat baris pertama
+        loadSiswaAbsen(); // Muat data dummy siswa tidak masuk
+      });
+    </script>
+
+    <!-- Script untuk Logika Okupasi & Jadwal Kelas -->
+    <script>
+      $(document).ready(function () {
+        const generateScheduleTable = (tableId, data, contentKey1, contentKey2) => {
+          let tableHtml = `<thead><tr><th rowspan="2" class="align-middle" style="width: 10%;">Kelas</th><th colspan="8">Jam</th></tr><tr><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead><tbody>`;
+          daftarKelas.forEach((kelas) => {
+            tableHtml += `<tr><td class="fw-bold">${kelas}</td>`;
+            const jadwalKelas = (data[kelas] || []).sort((a, b) => a.jamMulai - b.jamMulai);
+            let jamCounter = 1;
+            while (jamCounter <= 8) {
+              const jadwal = jadwalKelas.find((j) => j.jamMulai === jamCounter);
+              if (jadwal) {
+                const colspan = jadwal.jamSelesai - jadwal.jamMulai + 1;
+                let content = jadwal[contentKey1];
+                if (contentKey2 && jadwal[contentKey2]) {
+                  content += `<br><small class="text-muted">(${jadwal[contentKey2]})</small>`;
+                }
+                tableHtml += `<td colspan="${colspan}" class="occupied">${content}</td>`;
+                jamCounter += colspan;
+              } else {
+                tableHtml += `<td></td>`;
+                jamCounter++;
+              }
+            }
+            tableHtml += `</tr>`;
+          });
+          tableHtml += `</tbody>`;
+          $(tableId).html(tableHtml);
+        };
+
+        generateScheduleTable("#okupasi-table", okupasiKelasData, "guru", "mapel");
+        generateScheduleTable("#jadwal-table", jadwalKelasData, "guru", "mapel");
+      });
+    </script>
+  </body>
+</html>
