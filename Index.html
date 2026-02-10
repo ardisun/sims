@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Web Google Script</title>
+    <style>
+      /* Menghapus margin dan padding default agar tidak ada celah */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* Memastikan body dan html mengambil 100% tinggi dan lebar layar */
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden; /* Mengunci scroll pada halaman utama */
+        background-color: #f0f2f5; /* Warna latar belakang netral saat loading */
+      }
+
+      /* Container utama untuk menampung iframe */
+      .app-container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Pengaturan iframe agar memenuhi seluruh area container */
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+      }
+
+      /* Pesan loading sederhana jika diperlukan */
+      .loading-text {
+        position: absolute;
+        z-index: -1;
+        font-family: sans-serif;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Teks ini akan terlihat di belakang iframe saat proses muat -->
+      <div class="loading-text">Memuat aplikasi...</div>
+
+      <iframe src="https://script.google.com/macros/s/AKfycbxq_0AZehsN2gKjts5gxHshmJNgVp4iuHlp_ZibXFaAVC_ra3yj0mISYW7M0g10UJst/exec" allow="geolocation; microphone; camera; midi; encrypted-media;" allowfullscreen> </iframe>
+    </div>
+  </body>
+</html>
