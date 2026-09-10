@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktif Fisika: Listrik SMA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #082f49; /* Sky 950 */
+            color: #f0f9ff; /* Sky 50 */
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0c4a6e; }
+        ::-webkit-scrollbar-thumb { background: #0ea5e9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0284c7; }
+
+        .glass-panel {
+            background: rgba(12, 74, 110, 0.7); /* Sky 900 */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(125, 211, 252, 0.2);
+            border-radius: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 0.5rem;
+            background-color: #000;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.05);
+            touch-action: none; /* Prevent scrolling when interacting with canvas on mobile */
+        }
+
+        /* Particle animations for success */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: float 2s ease-out forwards;
+        }
+
+        /* Hidden utility */
+        .hidden { display: none !important; }
+        
+        /* Quiz Option hover state */
+        .quiz-option {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .quiz-option:hover:not(:disabled) {
+            background-color: #334155; /* Slate 700 */
+            border-color: #64748b; /* Slate 500 */
+        }
+        .quiz-option.correct {
+            background-color: #059669; /* Emerald 600 */
+            border-color: #10b981; /* Emerald 500 */
+        }
+        .quiz-option.wrong {
+            background-color: #e11d48; /* Rose 600 */
+            border-color: #f43f5e; /* Rose 500 */
+        }
+        
+        /* Slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #475569;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+    
+    <!-- Background visual effect (Gardu Induk & Petir) -->
+    <div class="fixed inset-0 z-[-1] bg-sky-950 overflow-hidden">
+        <svg class="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <!-- Sky Gradient -->
+            <defs>
+                <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#082f49" />
+                    <stop offset="100%" stop-color="#0c4a6e" />
+                </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#skyGrad)" />
+            
+            <!-- Lightning Bolts (Petir) -->
+            <g>
+                <path d="M 20% 0 L 35% 25% L 28% 30% L 40% 65% L 35% 70% L 45% 100%" stroke="#38bdf8" stroke-width="3" fill="none" opacity="0.4" class="animate-[pulse_2s_infinite]" />
+                <path d="M 80% 0 L 70% 30% L 75% 35% L 60% 70% L 65% 75% L 50% 100%" stroke="#7dd3fc" stroke-width="2" fill="none" opacity="0.3" class="animate-[pulse_3.5s_infinite_0.5s]" />
+                <path d="M 50% 0 L 45% 15% L 50% 20% L 40% 40% L 45% 45% L 35% 60%" stroke="#bae6fd" stroke-width="1.5" fill="none" opacity="0.2" class="animate-[pulse_2.5s_infinite_1s]" />
+            </g>
+
+            <!-- Substation Towers (Gardu Induk) -->
+            <g stroke="#075985" fill="none" stroke-width="2" opacity="0.6">
+                <!-- Tower 1 -->
+                <path d="M 10% 100% L 15% 50% L 25% 50% L 30% 100%" />
+                <path d="M 10% 100% L 25% 50% M 30% 100% L 15% 50%" />
+                <path d="M 12.5% 75% L 27.5% 75%" />
+                <path d="M 5% 50% L 35% 50%" />
+                <path d="M 10% 65% L 30% 65%" />
+                
+                <!-- Tower 2 -->
+                <path d="M 70% 100% L 75% 40% L 85% 40% L 90% 100%" />
+                <path d="M 70% 100% L 85% 40% M 90% 100% L 75% 40%" />
+                <path d="M 72.5% 70% L 87.5% 70%" />
+                <path d="M 65% 40% L 95% 40%" />
+                <path d="M 70% 55% L 90% 55%" />
+
+                <!-- Connecting Wires -->
+                <path d="M 5% 50% Q 40% 70% 65% 40%" opacity="0.5" />
+                <path d="M 35% 50% Q 65% 65% 95% 40%" opacity="0.5" />
+                <path d="M 10% 65% Q 40% 85% 70% 55%" opacity="0.5" />
+            </g>
+        </svg>
+    </div>
+
+    <!-- Header -->
+    <header class="p-4 md:p-6 flex justify-between items-center glass-panel m-4 z-10 sticky top-0">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-300 to-white">
+                ⚡ ElectroLab SMA
+            </h1>
+            <p class="text-sm text-sky-200 hidden md:block">Eksplorasi Listrik Statis & Dinamis</p>
+        </div>
+        <div class="flex gap-2 md:gap-4">
+            <div id="scoreDisplay" class="bg-sky-900 px-4 py-2 rounded-full font-bold text-yellow-400 border border-sky-700 shadow-inner flex items-center gap-2">
+                🏆 Skor: <span id="scoreValue">0</span>
+            </div>
+            <button onclick="showScreen('homeScreen')" class="btn-secondary px-4 py-2 rounded-full font-semibold text-sm">
+                Beranda
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 w-full max-w-6xl mx-auto z-10">
+        
+        <!-- ================= HOME SCREEN ================= -->
+        <div id="homeScreen" class="w-full flex flex-col items-center animate-fade-in">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4 text-white">Selamat Datang di Lab Virtual!</h2>
+                <p class="text-lg text-slate-300 max-w-2xl mx-auto">
+                    Pelajari konsep kelistrikan SMA melalui simulasi interaktif dan uji pemahamanmu dengan kuis berbagai tingkat kesulitan.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                <!-- Module 1 Card -->
+                <div class="glass-panel p-6 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">🎈</div>
+                    <h3 class="text-2xl font-bold mb-2 text-blue-300">Listrik Statis</h3>
+                    <p class="text-slate-400 mb-6 flex-grow">Pelajari muatan listrik, perpindahan elektron (Efek Tribolistrik), dan gaya tarik/tolak.</p>
+                    <button onclick="startModule('static')" class="btn-primary w-full py-3 rounded-lg font-bold text-lg">
+                        Mulai Simulasi
+                    </button>
+                </div>
+
+                <!-- Module 2 Card -->
+                <div class="glass-panel p-6 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform duration-300">
+                    <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">💡</div>
+                    <h3 class="text-2xl font-bold mb-2 text-yellow-300">Listrik Dinamis</h3>
+                    <p class="text-slate-400 mb-6 flex-grow">Rangkai sirkuit, amati aliran arus, dan pelajari Hukum Ohm (Tegangan, Arus, Hambatan).</p>
+                    <button onclick="startModule('dynamic')" class="btn-primary w-full py-3 rounded-lg font-bold text-lg">
+                        Mulai Simulasi
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-12 w-full max-w-4xl">
+                 <div class="glass-panel p-6 text-center border-t-4 border-t-purple-500">
+                    <h3 class="text-xl font-bold mb-4 text-purple-300">Ujian Akhir (Kuis)</h3>
+                    <p class="text-slate-400 mb-4">Uji pengetahuanmu dari kedua materi dengan level yang menantang!</p>
+                    <button onclick="startQuiz('mixed')" class="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-full font-bold transition-colors shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                        Mulai Kuis Tantangan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= STATIC ELECTRICITY MODULE ================= -->
+        <div id="staticScreen" class="w-full hidden flex-col items-center">
+            <div class="glass-panel p-4 md:p-6 w-full max-w-5xl mb-6 flex flex-col lg:flex-row gap-6">
+                <!-- Canvas Area -->
+                <div class="w-full lg:w-2/3 flex flex-col items-center">
+                    <h2 class="text-xl font-bold mb-2 text-blue-300 text-center">Simulasi: Efek Tribolistrik</h2>
+                    <p class="text-sm text-slate-400 mb-4 text-center">Gosokkan balon ke baju hangat untuk memindahkan elektron!</p>
+                    
+                    <div class="relative w-full max-w-[600px] aspect-video border border-slate-700 rounded-lg overflow-hidden bg-slate-900">
+                        <canvas id="staticCanvas" class="w-full h-full cursor-crosshair"></canvas>
+                        <!-- Instructions Overlay -->
+                        <div id="staticInstructions" class="absolute inset-0 flex items-center justify-center bg-black/60 pointer-events-none transition-opacity duration-300">
+                            <span class="bg-slate-800 px-4 py-2 rounded text-sm animate-pulse border border-slate-600">
+                                Sentuh/Klik dan seret balon ke arah baju hangat.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control & Info Area -->
+                <div class="w-full lg:w-1/3 flex flex-col gap-4">
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 h-full">
+                        <h3 class="font-bold text-lg mb-3 border-b border-slate-600 pb-2">Panel Info</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Muatan Balon:</span>
+                                <span id="balloonChargeText" class="font-bold text-white">0 C</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Muatan Baju:</span>
+                                <span id="sweaterChargeText" class="font-bold text-white">0 C</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Muatan Dinding:</span>
+                                <span class="font-bold text-white">Netral</span>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-slate-600">
+                                <p class="text-slate-300 italic text-xs mb-2" id="staticExplanation">
+                                    Benda-benda awalnya netral (jumlah proton = elektron).
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 space-y-3">
+                            <button onclick="resetStaticSim()" class="w-full btn-secondary py-2 rounded border border-slate-600 text-sm">
+                                🔄 Reset Simulasi
+                            </button>
+                            <button onclick="startQuiz('static')" class="w-full btn-primary py-2 rounded text-sm font-bold mt-4">
+                                📝 Kuis Listrik Statis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= DYNAMIC ELECTRICITY MODULE ================= -->
+        <div id="dynamicScreen" class="w-full hidden flex-col items-center">
+            <div class="glass-panel p-4 md:p-6 w-full max-w-5xl mb-6 flex flex-col lg:flex-row gap-6">
+                <!-- Canvas Area -->
+                <div class="w-full lg:w-2/3 flex flex-col items-center">
+                    <h2 class="text-xl font-bold mb-2 text-yellow-300 text-center">Simulasi: Hukum Ohm & Rangkaian</h2>
+                    <p class="text-sm text-slate-400 mb-4 text-center">Atur tegangan baterai dan hambatan lampu untuk melihat perubahan arus!</p>
+                    
+                    <div class="relative w-full max-w-[600px] aspect-video border border-slate-700 rounded-lg overflow-hidden bg-slate-900">
+                        <canvas id="dynamicCanvas" class="w-full h-full"></canvas>
+                        <!-- Switch Button overlayed on canvas -->
+                        <button id="circuitSwitch" class="absolute bottom-4 right-4 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg border-2 border-red-800 transition-colors">
+                            Saklar: OFF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Control & Info Area -->
+                <div class="w-full lg:w-1/3 flex flex-col gap-4">
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 h-full flex flex-col">
+                        <h3 class="font-bold text-lg mb-3 border-b border-slate-600 pb-2">Kontrol Variabel (Hukum Ohm)</h3>
+                        
+                        <div class="space-y-6 flex-grow">
+                            <!-- Voltage Slider -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-slate-400">Tegangan (V):</span>
+                                    <span id="voltageVal" class="font-bold text-blue-400">9.0 V</span>
+                                </div>
+                                <input type="range" id="voltageSlider" min="0" max="24" step="0.5" value="9">
+                            </div>
+
+                            <!-- Resistance Slider -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-slate-400">Hambatan (R):</span>
+                                    <span id="resistanceVal" class="font-bold text-orange-400">10.0 Ω</span>
+                                </div>
+                                <input type="range" id="resistanceSlider" min="1" max="50" step="1" value="10">
+                            </div>
+
+                            <!-- Current Display -->
+                            <div class="bg-slate-900 p-3 rounded border border-slate-700 mt-4 text-center">
+                                <span class="text-slate-400 text-sm block mb-1">Kuat Arus (I = V/R):</span>
+                                <span id="currentVal" class="text-2xl font-extrabold text-green-400">0.00 A</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                             <button onclick="startQuiz('dynamic')" class="w-full btn-primary py-2 rounded text-sm font-bold">
+                                📝 Kuis Listrik Dinamis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= QUIZ SCREEN ================= -->
+        <div id="quizScreen" class="w-full hidden flex-col items-center">
+            <div class="glass-panel p-6 md:p-8 w-full max-w-3xl flex flex-col relative">
+                <!-- Quiz Header -->
+                <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                    <div>
+                        <h2 id="quizTitle" class="text-2xl font-bold text-white">Kuis</h2>
+                        <span id="quizDifficulty" class="text-xs font-semibold px-2 py-1 bg-blue-900 text-blue-300 rounded mt-1 inline-block">Level: Mudah</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm text-slate-400">Soal</span>
+                        <div class="text-xl font-bold"><span id="qCurrent">1</span> / <span id="qTotal">5</span></div>
+                    </div>
+                </div>
+
+                <!-- Question Area -->
+                <div class="mb-8">
+                    <p id="questionText" class="text-lg md:text-xl font-medium text-slate-200 leading-relaxed"></p>
+                </div>
+
+                <!-- Options Area -->
+                <div id="optionsContainer" class="flex flex-col gap-3">
+                    <!-- Options injected via JS -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedbackArea" class="mt-6 hidden flex-col items-center animate-fade-in">
+                    <div id="feedbackText" class="text-lg font-bold mb-2"></div>
+                    <p id="feedbackExplanation" class="text-sm text-slate-300 mb-4 text-center p-3 bg-slate-800 rounded border border-slate-700 w-full"></p>
+                    <button id="nextBtn" onclick="nextQuestion()" class="btn-primary px-8 py-2 rounded-full font-bold">Lanjut</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= RESULT SCREEN ================= -->
+        <div id="resultScreen" class="w-full hidden flex-col items-center justify-center">
+            <div class="glass-panel p-8 w-full max-w-lg text-center flex flex-col items-center">
+                <div id="resultIcon" class="text-7xl mb-4">🎯</div>
+                <h2 class="text-3xl font-bold text-white mb-2">Kuis Selesai!</h2>
+                
+                <div class="my-6 p-6 bg-slate-800 rounded-xl border border-slate-700 w-full">
+                    <p class="text-slate-400 text-sm mb-1">Skor Kamu</p>
+                    <p class="text-5xl font-extrabold text-blue-400 mb-4" id="finalScoreDisplay">80%</p>
+                    
+                    <div class="flex justify-around text-sm border-t border-slate-700 pt-4 mt-2">
+                        <div>
+                            <span class="block text-slate-400">Benar</span>
+                            <span id="correctCount" class="font-bold text-green-400">4</span>
+                        </div>
+                        <div>
+                            <span class="block text-slate-400">Salah</span>
+                            <span id="wrongCount" class="font-bold text-red-400">1</span>
+                        </div>
+                         <div>
+                            <span class="block text-slate-400">Koin</span>
+                            <span id="coinsEarned" class="font-bold text-yellow-400">+40</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 w-full">
+                    <button onclick="showScreen('homeScreen')" class="flex-1 btn-secondary py-3 rounded-lg font-semibold text-white">
+                        Menu Utama
+                    </button>
+                    <button id="retryBtn" onclick="restartCurrentQuiz()" class="flex-1 btn-primary py-3 rounded-lg font-bold">
+                        Coba Lagi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Kelompok Lembu -->
+    <footer class="w-full mt-auto pb-6 z-10 animate-fade-in">
+        <div class="glass-panel mx-4 md:mx-auto max-w-5xl p-6 text-center border-t-4 border-t-sky-400">
+            <h3 class="font-bold text-xl text-sky-300 mb-2">Karya Kelompok Lembu</h3>
+            <p class="text-sm font-semibold mb-4 text-sky-100 border-b border-sky-700/50 pb-2 inline-block">Anggota Kelompok:</p>
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-sky-200">
+                <span class="flex items-center gap-1 font-medium">Ade Nikmah Latifiani, M.Pd.</span>
+                <span class="flex items-center gap-1 font-medium">Indah Tri Winarni, S.Pd.</span>
+                <span class="flex items-center gap-1 font-medium">Anik Murniati, S.Pd.</span>
+                <span class="flex items-center gap-1 font-medium">Wachid Kusuma Ananta, S.Pd.</span>
+                <span class="flex items-center gap-1 font-medium">Achyar Mukminin, S.Pd., Gr.</span>
+                <span class="flex items-center gap-1 font-medium">Sunardi, S.Si.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- UI Overlay for Messages -->
+    <div id="messageBox" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 border border-blue-500 text-white px-6 py-3 rounded-lg shadow-2xl z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+        <span id="messageText">Pesan di sini</span>
+    </div>
+
+    <script>
+        // --- Global State ---
+        let globalScore = 0;
+        let currentScreen = 'homeScreen';
+        
+        // --- Utility Functions ---
+        function showScreen(screenId) {
+            // Hide all screens
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('staticScreen').classList.add('hidden');
+            document.getElementById('dynamicScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            
+            // Show target
+            document.getElementById(screenId).classList.remove('hidden');
+            currentScreen = screenId;
+
+            // Handle specific screen initializations
+            if (screenId === 'staticScreen') {
+                initStaticSim();
+            } else if (screenId === 'dynamicScreen') {
+                initDynamicSim();
+            } else {
+                // Stop animations if leaving simulation screens
+                staticSimRunning = false;
+                dynamicSimRunning = false;
+            }
+        }
+
+        function showMessage(msg, type='info') {
+            const box = document.getElementById('messageBox');
+            const txt = document.getElementById('messageText');
+            txt.textContent = msg;
+            
+            if(type === 'success') box.style.borderColor = '#10b981';
+            else if(type === 'error') box.style.borderColor = '#f43f5e';
+            else box.style.borderColor = '#3b82f6';
+
+            box.classList.remove('opacity-0', 'translate-y-[-20px]');
+            
+            setTimeout(() => {
+                box.classList.add('opacity-0', 'translate-y-[-20px]');
+            }, 3000);
+        }
+
+        function updateGlobalScore(points) {
+            globalScore += points;
+            const scoreEl = document.getElementById('scoreValue');
+            scoreEl.textContent = globalScore;
+            
+            // simple pop animation
+            scoreEl.parentElement.style.transform = 'scale(1.1)';
+            setTimeout(() => scoreEl.parentElement.style.transform = 'scale(1)', 200);
+        }
+
+        function createParticles(x, y, color) {
+            for(let i=0; i<10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.width = Math.random() * 8 + 4 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = color;
+                particle.style.borderRadius = '50%';
+                
+                // Randomize trajectory via CSS variables (if we used them, but inline transform is easier here)
+                const tx = (Math.random() - 0.5) * 100;
+                const ty = (Math.random() - 1) * 100;
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+                
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 2000);
+            }
+        }
+
+        // --- Routing ---
+        function startModule(type) {
+            if (type === 'static') showScreen('staticScreen');
+            if (type === 'dynamic') showScreen('dynamicScreen');
+        }
+
+        // =====================================================================
+        // STATIC ELECTRICITY SIMULATION (Canvas 2D)
+        // =====================================================================
+        const sCanvas = document.getElementById('staticCanvas');
+        const sCtx = sCanvas.getContext('2d');
+        let staticSimRunning = false;
+        let sWidth, sHeight;
+
+        // Entities
+        let balloon = { x: 0, y: 0, r: 40, charge: 0, maxCharge: -30, dragging: false };
+        let sweater = { x: 0, y: 0, w: 150, h: 200, charge: 0 };
+        let wall = { x: 0, y: 0, w: 100, h: 0, charge: 0 }; // Wall is always neutral initially, but polarizes
+        
+        let charges = []; // Visual representation of charges
+        
+        function resizeStaticCanvas() {
+            const rect = sCanvas.parentElement.getBoundingClientRect();
+            sCanvas.width = rect.width;
+            sCanvas.height = rect.height;
+            sWidth = sCanvas.width;
+            sHeight = sCanvas.height;
+            
+            // Positioning
+            sweater.x = sWidth * 0.2 - sweater.w/2;
+            sweater.y = sHeight / 2 - sweater.h/2;
+            
+            wall.w = sWidth * 0.2;
+            wall.h = sHeight;
+            wall.x = sWidth - wall.w;
+            wall.y = 0;
+
+            if(!balloon.dragging && balloon.charge === 0) {
+                balloon.x = sWidth / 2;
+                balloon.y = sHeight / 2;
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if(currentScreen === 'staticScreen') resizeStaticCanvas();
+            if(currentScreen === 'dynamicScreen') resizeDynamicCanvas();
+        });
+
+        function initStaticSim() {
+            document.getElementById('staticInstructions').style.opacity = '1';
+            resizeStaticCanvas();
+            resetStaticSim();
+            staticSimRunning = true;
+            requestAnimationFrame(staticLoop);
+        }
+
+        function resetStaticSim() {
+            balloon.charge = 0;
+            sweater.charge = 0;
+            balloon.x = sWidth / 2;
+            balloon.y = sHeight / 2;
+            charges = [];
+            
+            // Generate initial neutral charges for sweater
+            for(let i=0; i<30; i++) {
+                charges.push({
+                    type: 'positive',
+                    x: sweater.x + 20 + Math.random() * (sweater.w - 40),
+                    y: sweater.y + 20 + Math.random() * (sweater.h - 40),
+                    parent: 'sweater'
+                });
+                charges.push({
+                    type: 'negative',
+                    x: sweater.x + 20 + Math.random() * (sweater.w - 40),
+                    y: sweater.y + 20 + Math.random() * (sweater.h - 40),
+                    parent: 'sweater'
+                });
+            }
+            
+            // Generate neutral charges for wall
+            for(let i=0; i<40; i++) {
+                let y = 20 + Math.random() * (wall.h - 40);
+                charges.push({ type: 'positive', origX: wall.x + 30, x: wall.x + 30, y: y, parent: 'wall' });
+                charges.push({ type: 'negative', origX: wall.x + 70, x: wall.x + 70, y: y, parent: 'wall' });
+            }
+
+            updateStaticUI();
+        }
+
+        function updateStaticUI() {
+            document.getElementById('balloonChargeText').textContent = balloon.charge + ' e';
+            document.getElementById('sweaterChargeText').textContent = sweater.charge + ' e';
+            
+            const exp = document.getElementById('staticExplanation');
+            if (balloon.charge === 0) {
+                exp.textContent = "Benda awalnya netral. Gosokkan balon ke baju untuk melihat perpindahan elektron (muatan negatif).";
+            } else {
+                exp.textContent = "Balon menjadi bermuatan NEGATIF karena mengambil elektron. Baju menjadi POSITIF. Dekatkan balon ke dinding untuk melihat polarisasi!";
+            }
+        }
+
+        // Interaction
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function handleStaticDown(e) {
+            if(e.cancelable) e.preventDefault();
+            const pos = getMousePos(sCanvas, e);
+            const dist = Math.hypot(pos.x - balloon.x, pos.y - balloon.y);
+            if (dist < balloon.r) {
+                balloon.dragging = true;
+                document.getElementById('staticInstructions').style.opacity = '0';
+            }
+        }
+
+        function handleStaticMove(e) {
+            if(e.cancelable) e.preventDefault();
+            if (balloon.dragging) {
+                const pos = getMousePos(sCanvas, e);
+                balloon.x = pos.x;
+                balloon.y = pos.y;
+
+                // Check rubbing against sweater
+                if (balloon.x > sweater.x && balloon.x < sweater.x + sweater.w &&
+                    balloon.y > sweater.y && balloon.y < sweater.y + sweater.h) {
+                    
+                    // Transfer charge logic (triboelectric)
+                    if (balloon.charge > balloon.maxCharge && Math.random() > 0.5) {
+                        // Find a negative charge on sweater
+                        let negChargeIndex = charges.findIndex(c => c.parent === 'sweater' && c.type === 'negative');
+                        if(negChargeIndex !== -1) {
+                            charges[negChargeIndex].parent = 'balloon'; // Transfer!
+                            balloon.charge--;
+                            sweater.charge++;
+                            updateStaticUI();
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleStaticUp(e) {
+            if(e.cancelable) e.preventDefault();
+            balloon.dragging = false;
+        }
+
+        sCanvas.addEventListener('mousedown', handleStaticDown);
+        sCanvas.addEventListener('mousemove', handleStaticMove);
+        window.addEventListener('mouseup', handleStaticUp);
+        sCanvas.addEventListener('touchstart', handleStaticDown, {passive: false});
+        sCanvas.addEventListener('touchmove', handleStaticMove, {passive: false});
+        window.addEventListener('touchend', handleStaticUp);
+
+        function drawCharge(x, y, type) {
+            sCtx.beginPath();
+            sCtx.arc(x, y, 6, 0, Math.PI * 2);
+            sCtx.fillStyle = type === 'positive' ? '#ef4444' : '#3b82f6'; // Red for +, Blue for -
+            sCtx.fill();
+            sCtx.fillStyle = '#fff';
+            sCtx.font = '10px Arial';
+            sCtx.textAlign = 'center';
+            sCtx.textBaseline = 'middle';
+            sCtx.fillText(type === 'positive' ? '+' : '-', x, y);
+        }
+
+        function staticLoop() {
+            if (!staticSimRunning) return;
+            
+            sCtx.clearRect(0, 0, sWidth, sHeight);
+
+            // Draw Sweater
+            sCtx.fillStyle = '#f59e0b'; // Amber
+            sCtx.beginPath();
+            sCtx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 20);
+            sCtx.fill();
+            sCtx.fillStyle = '#d97706';
+            sCtx.font = '16px Inter';
+            sCtx.fillText('Baju', sweater.x + sweater.w/2, sweater.y - 10);
+
+            // Draw Wall
+            sCtx.fillStyle = '#475569'; // Slate
+            sCtx.fillRect(wall.x, wall.y, wall.w, wall.h);
+            
+            // Wall physics (Polarization) and Balloon Attraction to sweater
+            let forceX = 0;
+            
+            if(!balloon.dragging) {
+                // If balloon has negative charge, it's attracted to positive sweater
+                if(balloon.charge < 0) {
+                    const dx = (sweater.x + sweater.w/2) - balloon.x;
+                    const dy = (sweater.y + sweater.h/2) - balloon.y;
+                    const dist = Math.max(Math.hypot(dx, dy), 50); // prevent div by 0
+                    
+                    // Simple coulomb-like attraction logic for visual effect
+                    const force = (Math.abs(balloon.charge) * sweater.charge) / (dist * dist);
+                    const moveSpeed = Math.min(force * 500, 5); // cap speed
+                    
+                    if(dist > balloon.r) {
+                        balloon.x += (dx/dist) * moveSpeed;
+                        balloon.y += (dy/dist) * moveSpeed;
+                    }
+                }
+            }
+
+            // Draw Wall Charges & Polarization logic
+            const wallDist = wall.x - balloon.x;
+            charges.forEach(c => {
+                if(c.parent === 'wall') {
+                    if (c.type === 'negative') {
+                        // Electrons in wall are repelled by negative balloon
+                        let repulsion = 0;
+                        if(balloon.charge < 0 && wallDist > 0 && wallDist < 200) {
+                             repulsion = (Math.abs(balloon.charge) / wallDist) * 30; // Push right
+                        }
+                        // Smoothly move to repulsed pos or back to orig
+                        let targetX = c.origX + Math.min(repulsion, 25);
+                        c.x += (targetX - c.x) * 0.1; 
+                    }
+                    drawCharge(c.x, c.y, c.type);
+                }
+            });
+
+            // Draw Balloon
+            sCtx.beginPath();
+            sCtx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+            sCtx.fillStyle = '#ef4444'; // Red balloon
+            sCtx.fill();
+            sCtx.lineWidth = 2;
+            sCtx.strokeStyle = '#b91c1c';
+            sCtx.stroke();
+            
+            // Draw string
+            sCtx.beginPath();
+            sCtx.moveTo(balloon.x, balloon.y + balloon.r);
+            sCtx.bezierCurveTo(
+                balloon.x, balloon.y + balloon.r + 30, 
+                balloon.x - 20, balloon.y + balloon.r + 40, 
+                balloon.x, balloon.y + balloon.r + 70
+            );
+            sCtx.strokeStyle = 'white';
+            sCtx.stroke();
+
+            // Draw dynamic charges
+            charges.forEach(c => {
+                if(c.parent === 'sweater') {
+                    drawCharge(c.x, c.y, c.type);
+                } else if (c.parent === 'balloon') {
+                    // Position charges on balloon randomly but constrained
+                    if(!c.bx) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const rad = Math.random() * (balloon.r - 10);
+                        c.bx = Math.cos(angle) * rad;
+                        c.by = Math.sin(angle) * rad;
+                    }
+                    drawCharge(balloon.x + c.bx, balloon.y + c.by, c.type);
+                }
+            });
+
+            requestAnimationFrame(staticLoop);
+        }
+
+        // =====================================================================
+        // DYNAMIC ELECTRICITY SIMULATION (Canvas 2D)
+        // =====================================================================
+        const dCanvas = document.getElementById('dynamicCanvas');
+        const dCtx = dCanvas.getContext('2d');
+        let dynamicSimRunning = false;
+        let dWidth, dHeight;
+        
+        let circuitState = {
+            voltage: 9.0,
+            resistance: 10.0,
+            current: 0.0,
+            isOn: false
+        };
+        
+        let electrons = [];
+        const numElectrons = 30;
+
+        function resizeDynamicCanvas() {
+            const rect = dCanvas.parentElement.getBoundingClientRect();
+            dCanvas.width = rect.width;
+            dCanvas.height = rect.height;
+            dWidth = dCanvas.width;
+            dHeight = dCanvas.height;
+            initElectrons();
+        }
+
+        function initDynamicSim() {
+            resizeDynamicCanvas();
+            circuitState.isOn = false;
+            updateCircuitUI();
+            updateSwitchButton();
+            dynamicSimRunning = true;
+            requestAnimationFrame(dynamicLoop);
+        }
+
+        document.getElementById('voltageSlider').addEventListener('input', (e) => {
+            circuitState.voltage = parseFloat(e.target.value);
+            updateCircuitUI();
+        });
+        document.getElementById('resistanceSlider').addEventListener('input', (e) => {
+            circuitState.resistance = parseFloat(e.target.value);
+            updateCircuitUI();
+        });
+        document.getElementById('circuitSwitch').addEventListener('click', () => {
+            circuitState.isOn = !circuitState.isOn;
+            updateCircuitUI();
+            updateSwitchButton();
+        });
+
+        function updateSwitchButton() {
+            const btn = document.getElementById('circuitSwitch');
+            if (circuitState.isOn) {
+                btn.textContent = 'Saklar: ON';
+                btn.className = 'absolute bottom-4 right-4 bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-full font-bold shadow-[0_0_15px_rgba(22,163,74,0.6)] border-2 border-green-400 transition-all';
+            } else {
+                btn.textContent = 'Saklar: OFF';
+                btn.className = 'absolute bottom-4 right-4 bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-full font-bold shadow-lg border-2 border-red-800 transition-all';
+            }
+        }
+
+        function updateCircuitUI() {
+            document.getElementById('voltageVal').textContent = circuitState.voltage.toFixed(1) + ' V';
+            document.getElementById('resistanceVal').textContent = circuitState.resistance.toFixed(1) + ' Ω';
+            
+            // Ohm's Law: I = V / R
+            if (circuitState.isOn && circuitState.resistance > 0) {
+                circuitState.current = circuitState.voltage / circuitState.resistance;
+            } else {
+                circuitState.current = 0;
+            }
+            
+            document.getElementById('currentVal').textContent = circuitState.current.toFixed(2) + ' A';
+        }
+
+        // Define circuit path layout
+        function getCircuitPath(w, h) {
+            const pad = 50;
+            return {
+                x1: pad, y1: pad,
+                x2: w - pad, y2: pad,
+                x3: w - pad, y3: h - pad,
+                x4: pad, y4: h - pad
+            };
+        }
+
+        function initElectrons() {
+            electrons = [];
+            for(let i=0; i<numElectrons; i++) {
+                electrons.push({ progress: i / numElectrons });
+            }
+        }
+
+        // Interpolate position along the rectangular circuit path
+        function getPosAlongPath(progress, path) {
+            let p = progress % 1.0;
+            if (p < 0) p += 1.0;
+            
+            // Total perimeter length approximation for proportion
+            const w = path.x2 - path.x1;
+            const h = path.y4 - path.y1;
+            const total = 2*w + 2*h;
+            
+            const wp = w/total;
+            const hp = h/total;
+            
+            if (p < wp) { // Top edge (going right)
+                const ratio = p / wp;
+                return { x: path.x1 + ratio * w, y: path.y1, dir: 'r' };
+            } else if (p < wp + hp) { // Right edge (going down)
+                const ratio = (p - wp) / hp;
+                return { x: path.x2, y: path.y1 + ratio * h, dir: 'd' };
+            } else if (p < 2*wp + hp) { // Bottom edge (going left)
+                const ratio = (p - wp - hp) / wp;
+                return { x: path.x3 - ratio * w, y: path.y3, dir: 'l' };
+            } else { // Left edge (going up)
+                const ratio = (p - 2*wp - hp) / hp;
+                return { x: path.x4, y: path.y4 - ratio * h, dir: 'u' };
+            }
+        }
+
+        function dynamicLoop() {
+            if (!dynamicSimRunning) return;
+            
+            dCtx.clearRect(0, 0, dWidth, dHeight);
+            const path = getCircuitPath(dWidth, dHeight);
+
+            // Draw Wires
+            dCtx.beginPath();
+            dCtx.moveTo(path.x1, path.y1);
+            dCtx.lineTo(path.x2, path.y2);
+            dCtx.lineTo(path.x3, path.y3);
+            dCtx.lineTo(path.x4, path.y4);
+            dCtx.closePath();
+            dCtx.lineWidth = 4;
+            dCtx.strokeStyle = '#64748b'; // Slate wire
+            dCtx.stroke();
+
+            // Draw Switch Break if OFF
+            if(!circuitState.isOn) {
+                // Erase line at bottom left
+                dCtx.clearRect(path.x4 - 10, path.y4 - 40, 20, 80);
+                
+                // Draw open switch
+                dCtx.beginPath();
+                dCtx.moveTo(path.x4, path.y4 - 40);
+                dCtx.lineTo(path.x4 + 20, path.y4 - 10); // Angled line
+                dCtx.lineWidth = 4;
+                dCtx.strokeStyle = '#94a3b8';
+                dCtx.stroke();
+                
+                dCtx.beginPath();
+                dCtx.arc(path.x4, path.y4 - 40, 4, 0, Math.PI*2);
+                dCtx.arc(path.x4, path.y4 + 40, 4, 0, Math.PI*2);
+                dCtx.fillStyle = '#cbd5e1';
+                dCtx.fill();
+            } else {
+                dCtx.beginPath();
+                dCtx.arc(path.x4, path.y4 - 40, 4, 0, Math.PI*2);
+                dCtx.arc(path.x4, path.y4 + 40, 4, 0, Math.PI*2);
+                dCtx.fillStyle = '#cbd5e1';
+                dCtx.fill();
+            }
+
+            // Draw Battery (Left side)
+            const cx = path.x1;
+            const cy = (path.y1 + path.y4) / 2;
+            
+            dCtx.fillStyle = '#0f172a'; // Clear wire behind
+            dCtx.fillRect(cx - 20, cy - 30, 40, 60);
+
+            // Positive terminal (top)
+            dCtx.fillStyle = '#ef4444';
+            dCtx.fillRect(cx - 15, cy - 25, 30, 25);
+            // Negative terminal (bottom)
+            dCtx.fillStyle = '#22c55e';
+            dCtx.fillRect(cx - 15, cy, 30, 25);
+            
+            dCtx.fillStyle = 'white';
+            dCtx.font = 'bold 16px Inter';
+            dCtx.textAlign = 'center';
+            dCtx.fillText('+', cx, cy - 10);
+            dCtx.fillText('-', cx, cy + 18);
+            
+            // Label Voltage
+            dCtx.font = '14px Inter';
+            dCtx.fillText(circuitState.voltage.toFixed(1) + ' V', cx - 35, cy);
+
+
+            // Draw Resistor/Lightbulb (Right side)
+            const rx = path.x2;
+            const ry = (path.y2 + path.y3) / 2;
+
+            dCtx.fillStyle = '#0f172a';
+            dCtx.fillRect(rx - 25, ry - 30, 50, 60);
+
+            // Draw Bulb Base
+            dCtx.fillStyle = '#475569';
+            dCtx.fillRect(rx - 15, ry - 10, 30, 20);
+
+            // Draw Bulb Glass
+            dCtx.beginPath();
+            dCtx.arc(rx, ry - 25, 20, 0, Math.PI*2);
+            
+            // Determine brightness based on Power (P = I^2 * R)
+            let power = circuitState.current * circuitState.current * circuitState.resistance;
+            // Normalize brightness roughly between 0 and 1 for visual
+            let maxExpectedPower = (24/1) * (24/1) * 1; // max V, min R
+            let brightness = Math.min(power / 20, 1); // scale factor for visual
+
+            if (circuitState.isOn && circuitState.current > 0) {
+                // Glow effect
+                let gradient = dCtx.createRadialGradient(rx, ry-25, 5, rx, ry-25, 40);
+                gradient.addColorStop(0, `rgba(253, 224, 71, ${0.8 * brightness + 0.2})`); // Yellow
+                gradient.addColorStop(1, `rgba(253, 224, 71, 0)`);
+                
+                dCtx.fillStyle = gradient;
+                dCtx.arc(rx, ry - 25, 40, 0, Math.PI*2);
+                dCtx.fill();
+                
+                dCtx.fillStyle = '#fef08a';
+            } else {
+                dCtx.fillStyle = 'rgba(255,255,255,0.1)';
+            }
+            dCtx.beginPath();
+            dCtx.arc(rx, ry - 25, 20, 0, Math.PI*2);
+            dCtx.fill();
+            dCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+            dCtx.lineWidth = 1;
+            dCtx.stroke();
+            
+            // Label Resistance
+            dCtx.fillStyle = 'white';
+            dCtx.textAlign = 'left';
+            dCtx.fillText(circuitState.resistance + ' Ω', rx + 30, ry);
+
+            // Draw Electrons (Flowing from Negative to Positive -> conventionally current is opposite, but electrons move - to +)
+            // Path is clockwise (Top: right, Right: down, Bottom: left, Left: up)
+            // Battery - is bottom left, + is top left.
+            // Electrons leave bottom left (path p=0.75ish) and go counter-clockwise if we use standard path.
+            // Let's manually map progress: 
+            // 0: Battery (-) bottom left -> Bottom wire -> Resistor -> Top wire -> Battery (+) top left
+            
+            // Speed factor based on current
+            let speed = circuitState.current * 0.005;
+
+            electrons.forEach(e => {
+                if(circuitState.isOn) {
+                    e.progress -= speed; // Move backward along our clockwise defined path (Counter-Clockwise)
+                    if (e.progress < 0) e.progress += 1.0;
+                }
+                
+                const pos = getPosAlongPath(e.progress, path);
+                
+                // Don't draw electrons if they are inside battery or bulb for cleaner look
+                const inBattery = (pos.x < path.x1 + 10 && pos.y > cy - 30 && pos.y < cy + 30);
+                const inBulb = (pos.x > path.x2 - 10 && pos.y > ry - 30 && pos.y < ry + 30);
+                
+                if(!inBattery && !inBulb) {
+                    dCtx.beginPath();
+                    dCtx.arc(pos.x, pos.y, 4, 0, Math.PI*2);
+                    dCtx.fillStyle = '#3b82f6'; // Blue electrons
+                    dCtx.fill();
+                    
+                    // Small minus sign
+                    dCtx.fillStyle = 'white';
+                    dCtx.font = '8px Arial';
+                    dCtx.textAlign = 'center';
+                    dCtx.textBaseline = 'middle';
+                    dCtx.fillText('-', pos.x, pos.y);
+                }
+            });
+
+            requestAnimationFrame(dynamicLoop);
+        }
+
+        // =====================================================================
+        // QUIZ SYSTEM
+        // =====================================================================
+        
+        const quizData = {
+            static: [
+                {
+                    q: "Apa yang terjadi pada elektron saat sebuah balon digosokkan pada baju hangat?",
+                    options: [
+                        "Elektron hancur.",
+                        "Elektron berpindah dari baju ke balon.",
+                        "Elektron berpindah dari balon ke baju.",
+                        "Proton berpindah menghasilkan listrik statis."
+                    ],
+                    correct: 1,
+                    exp: "Efek tribolistrik menyebabkan elektron berpindah. Baju cenderung melepaskan elektron, dan balon (karet/plastik) menangkapnya, membuatnya bermuatan negatif.",
+                    level: "Mudah"
+                },
+                {
+                    q: "Jika dua benda memiliki muatan yang sejenis (misal: negatif dan negatif), maka keduanya akan...",
+                    options: ["Tarik-menarik", "Tolak-menolak", "Menyatu", "Tidak bereaksi"],
+                    correct: 1,
+                    exp: "Sesuai hukum dasar elektrostatika, muatan sejenis akan tolak-menolak, dan muatan berbeda jenis akan tarik-menarik.",
+                    level: "Mudah"
+                },
+                {
+                    q: "Mengapa balon yang bermuatan negatif dapat menempel pada dinding yang netral?",
+                    options: [
+                        "Dinding berubah menjadi positif seutuhnya.",
+                        "Gaya gravitasi menarik balon.",
+                        "Terjadi polarisasi: elektron di dinding menjauh, meninggalkan area positif di permukaan.",
+                        "Balon mengeluarkan lem statis."
+                    ],
+                    correct: 2,
+                    exp: "Ini disebut induksi/polarisasi. Muatan negatif balon menolak elektron di permukaan dinding, sehingga permukaan dinding relatif lebih positif dan menarik balon.",
+                    level: "Sedang"
+                }
+            ],
+            dynamic: [
+                {
+                    q: "Berdasarkan Hukum Ohm, jika tegangan (V) dinaikkan sedangkan hambatan (R) tetap, apa yang terjadi pada arus (I)?",
+                    options: [
+                        "Arus (I) akan turun.",
+                        "Arus (I) akan tetap.",
+                        "Arus (I) akan naik.",
+                        "Rangkaian akan terputus."
+                    ],
+                    correct: 2,
+                    exp: "Hukum Ohm: I = V / R. Arus berbanding lurus dengan tegangan. Jika V naik, I juga naik.",
+                    level: "Mudah"
+                },
+                {
+                    q: "Sebuah rangkaian memiliki tegangan baterai 12V dan arus yang mengalir 2A. Berapakah nilai hambatannya (R)?",
+                    options: ["24 Ω", "6 Ω", "10 Ω", "14 Ω"],
+                    correct: 1,
+                    exp: "Dari Hukum Ohm V = I x R, maka R = V / I. R = 12V / 2A = 6 Ohm (Ω).",
+                    level: "Sedang"
+                },
+                {
+                    q: "Apa fungsi utama saklar dalam sebuah rangkaian listrik?",
+                    options: [
+                        "Menambah tegangan.",
+                        "Mengurangi hambatan.",
+                        "Menyimpan elektron.",
+                        "Memutus atau menyambungkan aliran arus listrik."
+                    ],
+                    correct: 3,
+                    exp: "Saklar berfungsi sebagai jembatan. Jika terbuka (OFF), rangkaian terputus (arus = 0). Jika tertutup (ON), rangkaian menyambung dan arus mengalir.",
+                    level: "Mudah"
+                }
+            ],
+            mixed: [] // Will be populated by combining the two above + extra
+        };
+
+        // Populate mixed quiz with some harder questions
+        quizData.mixed = [...quizData.static, ...quizData.dynamic, 
+            {
+                q: "Jika hambatan diperbesar 2 kali lipat dan tegangan dipertahankan, bagaimana dengan arus yang mengalir?",
+                options: [
+                    "Menjadi 2 kali lipat lebih besar.",
+                    "Menjadi setengah (1/2) dari semula.",
+                    "Tetap sama.",
+                    "Menjadi 4 kali lipat."
+                ],
+                correct: 1,
+                exp: "I = V / R. Arus berbanding terbalik dengan hambatan. Jika R dikali 2, maka I dibagi 2.",
+                level: "Sulit"
+            }
+        ];
+
+        let currentQuizQueue = [];
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+        let activeQuizType = '';
+
+        function startQuiz(type) {
+            activeQuizType = type;
+            // Copy array to avoid mutating original
+            currentQuizQueue = [...quizData[type]];
+            // Shuffle
+            currentQuizQueue.sort(() => Math.random() - 0.5);
+            
+            // Limit mixed quiz to 5 random questions to avoid being too long
+            if(type === 'mixed') currentQuizQueue = currentQuizQueue.slice(0, 5);
+            
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            
+            document.getElementById('quizTitle').textContent = 
+                type === 'static' ? 'Kuis Listrik Statis' : 
+                type === 'dynamic' ? 'Kuis Listrik Dinamis' : 'Kuis Tantangan Akhir';
+                
+            document.getElementById('qTotal').textContent = currentQuizQueue.length;
+            
+            showScreen('quizScreen');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const qData = currentQuizQueue[currentQuestionIndex];
+            document.getElementById('qCurrent').textContent = currentQuestionIndex + 1;
+            document.getElementById('questionText').textContent = qData.q;
+            
+            const diffEl = document.getElementById('quizDifficulty');
+            diffEl.textContent = "Level: " + qData.level;
+            // Color code difficulty
+            if(qData.level === 'Mudah') diffEl.className = 'text-xs font-semibold px-2 py-1 bg-green-900 text-green-300 rounded mt-1 inline-block';
+            else if(qData.level === 'Sedang') diffEl.className = 'text-xs font-semibold px-2 py-1 bg-yellow-900 text-yellow-300 rounded mt-1 inline-block';
+            else diffEl.className = 'text-xs font-semibold px-2 py-1 bg-red-900 text-red-300 rounded mt-1 inline-block';
+
+            const optContainer = document.getElementById('optionsContainer');
+            optContainer.innerHTML = ''; // clear previous
+            
+            document.getElementById('feedbackArea').classList.add('hidden');
+
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option w-full text-left p-4 rounded-lg border border-slate-600 bg-slate-800 text-slate-200 font-medium';
+                btn.innerHTML = `<span class="inline-block w-6 font-bold text-slate-400">${String.fromCharCode(65+index)}.</span> ${opt}`;
+                btn.onclick = () => selectAnswer(index, btn);
+                optContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(selectedIndex, btnElement) {
+            const qData = currentQuizQueue[currentQuestionIndex];
+            const isCorrect = selectedIndex === qData.correct;
+            
+            // Disable all options
+            const allBtns = document.getElementById('optionsContainer').children;
+            for(let b of allBtns) {
+                b.disabled = true;
+                b.style.cursor = 'default';
+                // Show correct answer visually even if wrong one picked
+                if(parseInt(b.dataset.index || Array.prototype.indexOf.call(allBtns, b)) === qData.correct) {
+                    b.classList.add('correct');
+                }
+            }
+
+            const fbArea = document.getElementById('feedbackArea');
+            const fbText = document.getElementById('feedbackText');
+            const fbExp = document.getElementById('feedbackExplanation');
+
+            fbArea.classList.remove('hidden');
+            fbExp.textContent = qData.exp;
+
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                fbText.textContent = "✅ Jawaban Benar!";
+                fbText.className = "text-lg font-bold mb-2 text-green-400";
+                quizScore++;
+                updateGlobalScore(10); // +10 Global score for correct answer
+                
+                // Particle effect on button
+                const rect = btnElement.getBoundingClientRect();
+                createParticles(rect.left + rect.width/2, rect.top, '#10b981');
+                
+            } else {
+                btnElement.classList.add('wrong');
+                fbText.textContent = "❌ Jawaban Kurang Tepat.";
+                fbText.className = "text-lg font-bold mb-2 text-red-400";
+            }
+            
+            // Change button text if last question
+            if(currentQuestionIndex === currentQuizQueue.length - 1) {
+                document.getElementById('nextBtn').textContent = "Lihat Hasil";
+            } else {
+                document.getElementById('nextBtn').textContent = "Lanjut";
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuizQueue.length) {
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            showScreen('resultScreen');
+            
+            const total = currentQuizQueue.length;
+            const percentage = Math.round((quizScore / total) * 100);
+            
+            document.getElementById('finalScoreDisplay').textContent = percentage + '%';
+            document.getElementById('correctCount').textContent = quizScore;
+            document.getElementById('wrongCount').textContent = total - quizScore;
+            document.getElementById('coinsEarned').textContent = "+" + (quizScore * 10);
+            
+            const icon = document.getElementById('resultIcon');
+            if(percentage >= 80) {
+                icon.textContent = '🏆';
+                showMessage("Luar Biasa! Pemahamanmu sangat baik.", "success");
+            } else if (percentage >= 50) {
+                icon.textContent = '👍';
+            } else {
+                icon.textContent = '📚';
+                showMessage("Jangan menyerah! Coba baca lagi konsepnya.", "error");
+            }
+        }
+
+        function restartCurrentQuiz() {
+            startQuiz(activeQuizType);
+        }
+
+        // Initialize App
+        window.onload = () => {
+            showScreen('homeScreen');
+            // Small initial animation for intro
+            document.getElementById('scoreDisplay').classList.add('animate-pulse');
+            setTimeout(() => document.getElementById('scoreDisplay').classList.remove('animate-pulse'), 2000);
+        };
+    </script>
+</body>
+</html>
